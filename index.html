@@ -81,12 +81,18 @@
     padding:3px 10px;border-radius:20px;}
   .field{margin-bottom:12px;}
   .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
-  .field input{
+  .field input, .field select{
     width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
     background:#100e1c;color:var(--text);font-size:16px;outline:none;
     transition:border-color .2s, box-shadow .2s;
   }
-  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(62,166,255,0.25);}
+  .field select{
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239b96b3'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat:no-repeat;background-position:right 14px center;background-size:20px;
+    padding-right:40px;
+  }
+  .field input:focus, .field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(62,166,255,0.25);}
   .row2{display:flex;gap:10px;}
   .row2 .field{flex:1;}
   button{
@@ -193,6 +199,16 @@
       <input type="date" id="fecha">
     </div>
 
+    <div class="field">
+      <label for="tipo">Tipo</label>
+      <select id="tipo">
+        <option value="Ticket">Ticket</option>
+        <option value="Factura">Factura</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Póliza">Póliza</option>
+      </select>
+    </div>
+
     <button class="btn-add" id="addItemBtn">Agregar artículo</button>
   </div>
 
@@ -286,6 +302,7 @@ const el = {
   precio: document.getElementById('precio'),
   descripcion: document.getElementById('descripcion'),
   fecha: document.getElementById('fecha'),
+  tipo: document.getElementById('tipo'),
   entryName: document.getElementById('entryName'),
   addItemBtn: document.getElementById('addItemBtn'),
   closeEntryBtn: document.getElementById('closeEntryBtn'),
@@ -359,7 +376,7 @@ function render(){
         <span class="price">${money(it.cantidad * it.precio)}</span>
         <button class="del" data-idx="${idx}" aria-label="Eliminar">✕</button>
       </div>
-      <span class="fecha">${formatFecha(it.fecha)}</span>
+      <span class="fecha">${formatFecha(it.fecha)}${it.tipo ? ' · ' + escapeHtml(it.tipo) : ''}</span>
     `;
     el.itemsList.appendChild(li);
   });
@@ -427,7 +444,7 @@ function renderHistory(){
           <span class="desc">${escapeHtml(it.descripcion)}</span>
           <span class="price">${money(it.cantidad*it.precio)}</span>
         </div>
-        <span class="fecha">${formatFecha(it.fecha)}</span>
+        <span class="fecha">${formatFecha(it.fecha)}${it.tipo ? ' · ' + escapeHtml(it.tipo) : ''}</span>
       </li>
     `).join('');
     const entryTitle = entry.nombre ? escapeHtml(entry.nombre) : `Entrada #${entry.number}`;
@@ -456,17 +473,19 @@ el.addItemBtn.addEventListener('click', () => {
   const precio = parseFloat(el.precio.value);
   const descripcion = el.descripcion.value.trim();
   const fecha = el.fecha.value || todayISO();
+  const tipo = el.tipo.value;
 
   if(!descripcion || isNaN(cantidad) || cantidad <= 0 || isNaN(precio) || precio < 0){
     showToast('Completa cantidad, descripción y precio válidos.');
     return;
   }
 
-  state.current.items.push({ cantidad, descripcion, precio, fecha });
+  state.current.items.push({ cantidad, descripcion, precio, fecha, tipo });
   el.cantidad.value = '';
   el.precio.value = '';
   el.descripcion.value = '';
   el.fecha.value = todayISO();
+  el.tipo.value = 'Ticket';
   el.descripcion.focus();
   render();
 });
@@ -571,7 +590,7 @@ function xmlHeaderCell(value){
 }
 
 function buildHistorialSheet(){
-  let rows = '<Row>' + ['Entrada', 'Estado', 'Fecha', 'Cantidad', 'Descripción', 'Precio unitario', 'Subtotal']
+  let rows = '<Row>' + ['Entrada', 'Estado', 'Fecha', 'Cantidad', 'Descripción', 'Tipo', 'Precio unitario', 'Subtotal']
     .map(xmlHeaderCell).join('') + '</Row>';
 
   const addEntryRows = (label, estado, items) => {
@@ -582,6 +601,7 @@ function buildHistorialSheet(){
         xmlCell(formatFecha(it.fecha)) +
         xmlCell(it.cantidad, 'Number') +
         xmlCell(it.descripcion) +
+        xmlCell(it.tipo || '') +
         xmlCell(it.precio, 'Number') +
         xmlCell((it.cantidad * it.precio).toFixed(2), 'Number') +
         '</Row>';
