@@ -98,8 +98,11 @@
   button:active{transform:scale(.96);filter:brightness(.92);}
   .btn-add{background:linear-gradient(135deg, var(--accent), #7ad0ff);color:#04121e;}
   .btn-close{background:linear-gradient(135deg, var(--danger), #ff9a8a);color:#340000;margin-top:8px;}
-  .btn-import{background:linear-gradient(135deg, var(--accent2), #7bffb0);color:#04240f;}
-  .btn-excel{background:linear-gradient(135deg, #1d6f42, #35c17c);color:#eafff2;margin-top:8px;}
+  .btn-stack{display:flex;flex-direction:column;gap:14px;}
+  .btn-stack button{margin-top:0;}
+  .btn-backup-export{background:linear-gradient(135deg, #ff9ecf, #ec4899);color:#3a0420;}
+  .btn-backup-import{background:linear-gradient(135deg, #ec4899, #b32b6d);color:#ffe3f1;}
+  .btn-backup-excel{background:linear-gradient(135deg, #b32b6d, #7a1c4a);color:#ffe3f1;}
   .items{list-style:none;margin:0;padding:0;}
   .items li{
     display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
@@ -238,9 +241,11 @@
     <div class="empty" style="padding:0 0 12px;text-align:left;">
       Guarda un archivo con todos tus registros. Si algo borra la app del teléfono, lo importas y recuperas todo.
     </div>
-    <button class="btn-add" id="exportBtn">Exportar respaldo</button>
-    <button class="btn-import" id="importBtn">Importar respaldo</button>
-    <button class="btn-excel" id="exportExcelBtn">Exportar a Excel</button>
+    <div class="btn-stack">
+      <button class="btn-backup-export" id="exportBtn">Exportar respaldo</button>
+      <button class="btn-backup-import" id="importBtn">Importar respaldo</button>
+      <button class="btn-backup-excel" id="exportExcelBtn">Exportar a Excel</button>
+    </div>
     <input type="file" id="importFile" accept="application/json" style="display:none;">
   </div>
 
