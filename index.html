@@ -181,7 +181,7 @@
     <div class="row2">
       <div class="field">
         <label for="cantidad">Cantidad</label>
-        <input type="number" id="cantidad" inputmode="decimal" min="0" step="1" placeholder="1">
+        <select id="cantidad"></select>
       </div>
       <div class="field">
         <label for="precio">Precio</label>
@@ -481,7 +481,7 @@ el.addItemBtn.addEventListener('click', () => {
   }
 
   state.current.items.push({ cantidad, descripcion, precio, fecha, tipo });
-  el.cantidad.value = '';
+  el.cantidad.value = '1';
   el.precio.value = '';
   el.descripcion.value = '';
   el.fecha.value = todayISO();
@@ -669,6 +669,13 @@ el.exportExcelBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
   showToast('Excel exportado.');
 });
+
+for(let n = 1; n <= 50; n++){
+  const opt = document.createElement('option');
+  opt.value = n;
+  opt.textContent = n;
+  el.cantidad.appendChild(opt);
+}
 
 el.fecha.value = todayISO();
 render();
