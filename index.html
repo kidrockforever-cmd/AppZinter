@@ -202,6 +202,10 @@
       <span>Total</span>
       <span id="currentTotal">$0.00</span>
     </div>
+    <div class="field" style="margin-top:12px;">
+      <label for="entryName">Nombre de la entrada (opcional)</label>
+      <input type="text" id="entryName" placeholder="Ej. Súper del jueves, Reunión, etc.">
+    </div>
     <button class="btn-close" id="closeEntryBtn">Cerrar entrada</button>
   </div>
 
@@ -280,6 +284,7 @@ const el = {
   precio: document.getElementById('precio'),
   descripcion: document.getElementById('descripcion'),
   fecha: document.getElementById('fecha'),
+  entryName: document.getElementById('entryName'),
   addItemBtn: document.getElementById('addItemBtn'),
   closeEntryBtn: document.getElementById('closeEntryBtn'),
   itemsList: document.getElementById('itemsList'),
@@ -423,9 +428,10 @@ function renderHistory(){
         <span class="fecha">${formatFecha(it.fecha)}</span>
       </li>
     `).join('');
+    const entryTitle = entry.nombre ? escapeHtml(entry.nombre) : `Entrada #${entry.number}`;
     details.innerHTML = `
       <summary>
-        <span>Entrada #${entry.number} <span class="meta">— ${entry.closedAt}</span></span>
+        <span>${entryTitle} <span class="meta">— ${entry.closedAt}</span></span>
         <span class="total">${money(total)}</span>
       </summary>
       <ul class="items">${itemsHtml || '<li class="empty">Sin artículos</li>'}</ul>
@@ -475,13 +481,16 @@ el.closeEntryBtn.addEventListener('click', () => {
     return;
   }
   const closedAt = new Date().toLocaleString('es-MX', { dateStyle:'short', timeStyle:'short' });
+  const nombre = el.entryName.value.trim();
   state.history.push({
     number: state.nextEntryNumber,
+    nombre,
     closedAt,
     items: state.current.items,
   });
   state.nextEntryNumber += 1;
   state.current = { items: [] };
+  el.entryName.value = '';
   render();
   showToast('Entrada cerrada. Puedes iniciar una nueva.');
 });
@@ -575,8 +584,8 @@ function buildHistorialSheet(){
     });
   };
 
-  state.history.forEach(entry => addEntryRows(`#${entry.number}`, 'Cerrada', entry.items));
-  addEntryRows(`#${state.nextEntryNumber}`, 'En curso', state.current.items);
+  state.history.forEach(entry => addEntryRows(entry.nombre || `#${entry.number}`, 'Cerrada', entry.items));
+  addEntryRows(el.entryName.value.trim() || `#${state.nextEntryNumber}`, 'En curso', state.current.items);
 
   return `<Worksheet ss:Name="Historial"><Table>${rows}</Table></Worksheet>`;
 }
