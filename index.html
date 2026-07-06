@@ -190,6 +190,7 @@
     </div>
     <button class="btn-add" id="exportBtn">Exportar respaldo</button>
     <button class="btn-close" id="importBtn" style="background:var(--accent2);color:#04240f;">Importar respaldo</button>
+    <button class="btn-close" id="exportExcelBtn" style="background:#1d6f42;color:#eafff2;margin-top:8px;">Exportar a Excel</button>
     <input type="file" id="importFile" accept="application/json" style="display:none;">
   </div>
 
@@ -245,6 +246,7 @@ const el = {
   exportBtn: document.getElementById('exportBtn'),
   importBtn: document.getElementById('importBtn'),
   importFile: document.getElementById('importFile'),
+  exportExcelBtn: document.getElementById('exportExcelBtn'),
 };
 
 function todayISO(){
@@ -482,6 +484,103 @@ el.importFile.addEventListener('change', () => {
     }
   };
   reader.readAsText(file);
+});
+
+function escapeXml(str){
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function xmlCell(value, type){
+  return `<Cell><Data ss:Type="${type || 'String'}">${escapeXml(value)}</Data></Cell>`;
+}
+
+function xmlHeaderCell(value){
+  return `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(value)}</Data></Cell>`;
+}
+
+function buildHistorialSheet(){
+  let rows = '<Row>' + ['Entrada', 'Estado', 'Fecha', 'Cantidad', 'Descripción', 'Precio unitario', 'Subtotal']
+    .map(xmlHeaderCell).join('') + '</Row>';
+
+  const addEntryRows = (label, estado, items) => {
+    items.forEach(it => {
+      rows += '<Row>' +
+        xmlCell(label) +
+        xmlCell(estado) +
+        xmlCell(formatFecha(it.fecha)) +
+        xmlCell(it.cantidad, 'Number') +
+        xmlCell(it.descripcion) +
+        xmlCell(it.precio, 'Number') +
+        xmlCell((it.cantidad * it.precio).toFixed(2), 'Number') +
+        '</Row>';
+    });
+  };
+
+  state.history.forEach(entry => addEntryRows(`#${entry.number}`, 'Cerrada', entry.items));
+  addEntryRows(`#${state.nextEntryNumber}`, 'En curso', state.current.items);
+
+  return `<Worksheet ss:Name="Historial"><Table>${rows}</Table></Worksheet>`;
+}
+
+function buildResumenSheet(){
+  const allItems = getAllItems();
+  const byMonth = {};
+  allItems.forEach(it => {
+    const key = monthKeyOf(it.fecha);
+    if(!byMonth[key]) byMonth[key] = { cantidad: 0, total: 0 };
+    byMonth[key].cantidad += it.cantidad;
+    byMonth[key].total += it.cantidad * it.precio;
+  });
+
+  let rows = '<Row>' + ['Mes', 'Unidades', 'Total'].map(xmlHeaderCell).join('') + '</Row>';
+  Object.keys(byMonth).sort().forEach(key => {
+    rows += '<Row>' +
+      xmlCell(monthLabelOf(key)) +
+      xmlCell(byMonth[key].cantidad, 'Number') +
+      xmlCell(byMonth[key].total.toFixed(2), 'Number') +
+      '</Row>';
+  });
+
+  const grand = allItems.reduce((acc, it) => {
+    acc.cantidad += it.cantidad;
+    acc.total += it.cantidad * it.precio;
+    return acc;
+  }, { cantidad: 0, total: 0 });
+  rows += '<Row>' + xmlHeaderCell('Total general') +
+    xmlCell(grand.cantidad, 'Number') + xmlCell(grand.total.toFixed(2), 'Number') + '</Row>';
+
+  return `<Worksheet ss:Name="Resumen por mes"><Table>${rows}</Table></Worksheet>`;
+}
+
+el.exportExcelBtn.addEventListener('click', () => {
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#D9E8FB" ss:Pattern="Solid"/></Style>
+ </Styles>
+ ${buildHistorialSheet()}
+ ${buildResumenSheet()}
+</Workbook>`;
+
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `entradas-${todayISO()}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Excel exportado.');
 });
 
 el.fecha.value = todayISO();
