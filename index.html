@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Entradas">
+<meta name="theme-color" content="#101418">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Registro de Entradas</title>
+<style>
+  :root{
+    --bg:#101418;
+    --card:#1b2027;
+    --accent:#3ea6ff;
+    --accent2:#2ecc71;
+    --danger:#ff5d5d;
+    --text:#eef2f6;
+    --muted:#8a94a3;
+    --border:#2a3038;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;}
+  body{
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    min-height:100vh;
+  }
+  header{
+    position:sticky;top:0;z-index:5;
+    padding:calc(env(safe-area-inset-top) + 14px) 16px 14px;
+    background:rgba(16,20,24,0.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  header h1{margin:0;font-size:20px;font-weight:700;}
+  header .sub{color:var(--muted);font-size:13px;margin-top:2px;}
+  main{padding:16px;max-width:560px;margin:0 auto;padding-bottom:100px;}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:16px;margin-bottom:16px;
+  }
+  .card h2{margin:0 0 12px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;}
+  .badge{background:var(--accent);color:#04121e;font-size:12px;font-weight:700;
+    padding:3px 10px;border-radius:20px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  .field input{
+    width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+    background:#0e1216;color:var(--text);font-size:16px;outline:none;
+  }
+  .field input:focus{border-color:var(--accent);}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;}
+  button{
+    border:none;border-radius:12px;font-size:16px;font-weight:600;
+    padding:14px;cursor:pointer;width:100%;
+  }
+  .btn-add{background:var(--accent);color:#04121e;}
+  .btn-add:active{opacity:0.8;}
+  .btn-close{background:var(--danger);color:#2a0000;margin-top:8px;}
+  .btn-close:active{opacity:0.85;}
+  .items{list-style:none;margin:0;padding:0;}
+  .items li{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+    padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;
+  }
+  .items li:last-child{border-bottom:none;}
+  .items .main-line{display:flex;align-items:center;width:100%;}
+  .items .desc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;}
+  .items .qty{color:var(--muted);width:40px;text-align:center;flex-shrink:0;}
+  .items .price{width:70px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .items .del{
+    background:none;border:none;color:var(--danger);font-size:18px;width:28px;padding:0;margin-left:4px;flex-shrink:0;
+  }
+  .items .fecha{width:100%;color:var(--muted);font-size:11px;padding-left:44px;margin-top:2px;}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:16px 0;}
+  .total-row{display:flex;justify-content:space-between;font-size:15px;font-weight:700;
+    padding-top:12px;margin-top:8px;border-top:1px solid var(--border);}
+  .summary-row{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;}
+  .summary-row .label{color:var(--muted);}
+  .summary-row .value{font-weight:700;}
+  .summary-row.grand .value{color:var(--accent2);}
+  .month-breakdown{margin-top:10px;}
+  .month-breakdown summary{list-style:none;cursor:pointer;color:var(--accent);font-size:13px;}
+  .month-breakdown summary::-webkit-details-marker{display:none;}
+  .month-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;
+    border-bottom:1px solid var(--border);}
+  .month-row:last-child{border-bottom:none;}
+  .month-row .m-name{text-transform:capitalize;color:var(--text);}
+  .month-row .m-data{color:var(--muted);text-align:right;}
+  .history-item{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+  .history-item summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;
+    align-items:center;font-size:14px;}
+  .history-item summary::-webkit-details-marker{display:none;}
+  .history-item .meta{color:var(--muted);font-size:12px;}
+  .history-item .total{font-weight:700;color:var(--accent2);}
+  .history-item .del-entry{background:var(--danger);color:#2a0000;margin-top:10px;padding:8px;font-size:13px;}
+  .toast{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);
+    transform:translateX(-50%);background:#0e1216;border:1px solid var(--border);
+    color:var(--text);padding:10px 18px;border-radius:20px;font-size:14px;
+    opacity:0;pointer-events:none;transition:opacity .25s;z-index:20;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Registro de Entradas</h1>
+  <div class="sub" id="entryLabel">Entrada actual</div>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Nuevo artículo <span class="badge" id="itemCount">0</span></h2>
+
+    <div class="row2">
+      <div class="field">
+        <label for="cantidad">Cantidad</label>
+        <input type="number" id="cantidad" inputmode="decimal" min="0" step="1" placeholder="1">
+      </div>
+      <div class="field">
+        <label for="precio">Precio</label>
+        <input type="number" id="precio" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="descripcion">Descripción</label>
+      <input type="text" id="descripcion" placeholder="Ej. Cerveza, refrescos, etc.">
+    </div>
+
+    <div class="field">
+      <label for="fecha">Fecha</label>
+      <input type="date" id="fecha">
+    </div>
+
+    <button class="btn-add" id="addItemBtn">Agregar artículo</button>
+  </div>
+
+  <div class="card">
+    <h2>Entrada en curso</h2>
+    <ul class="items" id="itemsList"></ul>
+    <div class="empty" id="emptyMsg">Aún no has agregado artículos.</div>
+    <div class="total-row">
+      <span>Total</span>
+      <span id="currentTotal">$0.00</span>
+    </div>
+    <button class="btn-close" id="closeEntryBtn">Cerrar entrada</button>
+  </div>
+
+  <div class="card">
+    <h2>Resumen de consumo</h2>
+    <div class="summary-row">
+      <span class="label" id="monthLabel">Este mes</span>
+      <span class="value" id="monthQty">0 unidades</span>
+    </div>
+    <div class="summary-row">
+      <span class="label">Gastado este mes</span>
+      <span class="value" id="monthTotal">$0.00</span>
+    </div>
+    <div class="summary-row grand">
+      <span class="label">Total unidades (todo el historial)</span>
+      <span class="value" id="grandQty">0</span>
+    </div>
+    <div class="summary-row grand">
+      <span class="label">Total gastado (todo el historial)</span>
+      <span class="value" id="grandTotal">$0.00</span>
+    </div>
+    <details class="month-breakdown">
+      <summary>Ver desglose por mes</summary>
+      <div id="monthList"></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Historial de entradas <span class="badge" id="historyCount">0</span></h2>
+    <div id="historyList"></div>
+    <div class="empty" id="historyEmpty">No hay entradas cerradas todavía.</div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'entradasApp.v1';
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { nextEntryNumber: 1, current: { items: [] }, history: [] };
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = loadState();
+
+(function patchLegacyItems(){
+  const today = todayISO();
+  state.current.items.forEach(it => { if(!it.fecha) it.fecha = today; });
+  state.history.forEach(entry => entry.items.forEach(it => { if(!it.fecha) it.fecha = today; }));
+})();
+
+const el = {
+  cantidad: document.getElementById('cantidad'),
+  precio: document.getElementById('precio'),
+  descripcion: document.getElementById('descripcion'),
+  fecha: document.getElementById('fecha'),
+  addItemBtn: document.getElementById('addItemBtn'),
+  closeEntryBtn: document.getElementById('closeEntryBtn'),
+  itemsList: document.getElementById('itemsList'),
+  emptyMsg: document.getElementById('emptyMsg'),
+  currentTotal: document.getElementById('currentTotal'),
+  itemCount: document.getElementById('itemCount'),
+  entryLabel: document.getElementById('entryLabel'),
+  historyList: document.getElementById('historyList'),
+  historyEmpty: document.getElementById('historyEmpty'),
+  historyCount: document.getElementById('historyCount'),
+  monthLabel: document.getElementById('monthLabel'),
+  monthQty: document.getElementById('monthQty'),
+  monthTotal: document.getElementById('monthTotal'),
+  grandQty: document.getElementById('grandQty'),
+  grandTotal: document.getElementById('grandTotal'),
+  monthList: document.getElementById('monthList'),
+  toast: document.getElementById('toast'),
+};
+
+function todayISO(){
+  const d = new Date();
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d - tz).toISOString().slice(0, 10);
+}
+
+function formatFecha(iso){
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function monthKeyOf(iso){
+  return iso.slice(0, 7);
+}
+
+function monthLabelOf(key){
+  const [y, m] = key.split('-');
+  const date = new Date(Number(y), Number(m) - 1, 1);
+  return date.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+}
+
+function money(n){
+  return '$' + Number(n).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function showToast(msg){
+  el.toast.textContent = msg;
+  el.toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> el.toast.classList.remove('show'), 1600);
+}
+
+function currentTotal(){
+  return state.current.items.reduce((sum, it) => sum + it.cantidad * it.precio, 0);
+}
+
+function render(){
+  el.entryLabel.textContent = `Entrada #${state.nextEntryNumber} en curso`;
+
+  el.itemsList.innerHTML = '';
+  state.current.items.forEach((it, idx) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="main-line">
+        <span class="qty">${it.cantidad}x</span>
+        <span class="desc">${escapeHtml(it.descripcion)}</span>
+        <span class="price">${money(it.cantidad * it.precio)}</span>
+        <button class="del" data-idx="${idx}" aria-label="Eliminar">✕</button>
+      </div>
+      <span class="fecha">${formatFecha(it.fecha)}</span>
+    `;
+    el.itemsList.appendChild(li);
+  });
+
+  el.emptyMsg.style.display = state.current.items.length ? 'none' : 'block';
+  el.currentTotal.textContent = money(currentTotal());
+  el.itemCount.textContent = state.current.items.length;
+
+  renderHistory();
+  renderSummary();
+  saveState();
+}
+
+function getAllItems(){
+  return [...state.current.items, ...state.history.flatMap(entry => entry.items)];
+}
+
+function renderSummary(){
+  const allItems = getAllItems();
+  const currentMonthKey = monthKeyOf(todayISO());
+
+  const byMonth = {};
+  allItems.forEach(it => {
+    const key = monthKeyOf(it.fecha);
+    if(!byMonth[key]) byMonth[key] = { cantidad: 0, total: 0 };
+    byMonth[key].cantidad += it.cantidad;
+    byMonth[key].total += it.cantidad * it.precio;
+  });
+
+  const monthData = byMonth[currentMonthKey] || { cantidad: 0, total: 0 };
+  el.monthLabel.textContent = monthLabelOf(currentMonthKey);
+  el.monthQty.textContent = `${monthData.cantidad} unidades`;
+  el.monthTotal.textContent = money(monthData.total);
+
+  const grand = allItems.reduce((acc, it) => {
+    acc.cantidad += it.cantidad;
+    acc.total += it.cantidad * it.precio;
+    return acc;
+  }, { cantidad: 0, total: 0 });
+  el.grandQty.textContent = grand.cantidad;
+  el.grandTotal.textContent = money(grand.total);
+
+  const monthKeys = Object.keys(byMonth).sort().reverse();
+  el.monthList.innerHTML = monthKeys.map(key => `
+    <div class="month-row">
+      <span class="m-name">${monthLabelOf(key)}</span>
+      <span class="m-data">${byMonth[key].cantidad} unidades — ${money(byMonth[key].total)}</span>
+    </div>
+  `).join('') || '<div class="empty">Sin datos todavía.</div>';
+}
+
+function renderHistory(){
+  el.historyList.innerHTML = '';
+  el.historyCount.textContent = state.history.length;
+  el.historyEmpty.style.display = state.history.length ? 'none' : 'block';
+
+  [...state.history].reverse().forEach(entry => {
+    const total = entry.items.reduce((s,it)=> s + it.cantidad*it.precio, 0);
+    const details = document.createElement('details');
+    details.className = 'history-item';
+    const itemsHtml = entry.items.map(it => `
+      <li>
+        <div class="main-line">
+          <span class="qty">${it.cantidad}x</span>
+          <span class="desc">${escapeHtml(it.descripcion)}</span>
+          <span class="price">${money(it.cantidad*it.precio)}</span>
+        </div>
+        <span class="fecha">${formatFecha(it.fecha)}</span>
+      </li>
+    `).join('');
+    details.innerHTML = `
+      <summary>
+        <span>Entrada #${entry.number} <span class="meta">— ${entry.closedAt}</span></span>
+        <span class="total">${money(total)}</span>
+      </summary>
+      <ul class="items">${itemsHtml || '<li class="empty">Sin artículos</li>'}</ul>
+      <button class="del-entry" data-entry="${entry.number}">Eliminar esta entrada</button>
+    `;
+    el.historyList.appendChild(details);
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+el.addItemBtn.addEventListener('click', () => {
+  const cantidad = parseFloat(el.cantidad.value);
+  const precio = parseFloat(el.precio.value);
+  const descripcion = el.descripcion.value.trim();
+  const fecha = el.fecha.value || todayISO();
+
+  if(!descripcion || isNaN(cantidad) || cantidad <= 0 || isNaN(precio) || precio < 0){
+    showToast('Completa cantidad, descripción y precio válidos.');
+    return;
+  }
+
+  state.current.items.push({ cantidad, descripcion, precio, fecha });
+  el.cantidad.value = '';
+  el.precio.value = '';
+  el.descripcion.value = '';
+  el.fecha.value = todayISO();
+  el.descripcion.focus();
+  render();
+});
+
+el.itemsList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.del');
+  if(!btn) return;
+  const idx = parseInt(btn.dataset.idx, 10);
+  state.current.items.splice(idx, 1);
+  render();
+});
+
+el.closeEntryBtn.addEventListener('click', () => {
+  if(state.current.items.length === 0){
+    showToast('Agrega al menos un artículo antes de cerrar.');
+    return;
+  }
+  const closedAt = new Date().toLocaleString('es-MX', { dateStyle:'short', timeStyle:'short' });
+  state.history.push({
+    number: state.nextEntryNumber,
+    closedAt,
+    items: state.current.items,
+  });
+  state.nextEntryNumber += 1;
+  state.current = { items: [] };
+  render();
+  showToast('Entrada cerrada. Puedes iniciar una nueva.');
+});
+
+el.historyList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.del-entry');
+  if(!btn) return;
+  const num = parseInt(btn.dataset.entry, 10);
+  if(confirm(`¿Eliminar la entrada #${num}? Esta acción no se puede deshacer.`)){
+    state.history = state.history.filter(entry => entry.number !== num);
+    render();
+  }
+});
+
+el.fecha.value = todayISO();
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
