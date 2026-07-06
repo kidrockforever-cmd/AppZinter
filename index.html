@@ -183,6 +183,16 @@
     <div class="empty" id="historyEmpty">No hay entradas cerradas todavía.</div>
   </div>
 
+  <div class="card">
+    <h2>Respaldo de datos</h2>
+    <div class="empty" style="padding:0 0 12px;text-align:left;">
+      Guarda un archivo con todos tus registros. Si algo borra la app del teléfono, lo importas y recuperas todo.
+    </div>
+    <button class="btn-add" id="exportBtn">Exportar respaldo</button>
+    <button class="btn-close" id="importBtn" style="background:var(--accent2);color:#04240f;">Importar respaldo</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -232,6 +242,9 @@ const el = {
   grandTotal: document.getElementById('grandTotal'),
   monthList: document.getElementById('monthList'),
   toast: document.getElementById('toast'),
+  exportBtn: document.getElementById('exportBtn'),
+  importBtn: document.getElementById('importBtn'),
+  importFile: document.getElementById('importFile'),
 };
 
 function todayISO(){
@@ -425,6 +438,50 @@ el.historyList.addEventListener('click', (e) => {
     state.history = state.history.filter(entry => entry.number !== num);
     render();
   }
+});
+
+el.exportBtn.addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `entradas-respaldo-${todayISO()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Respaldo exportado.');
+});
+
+el.importBtn.addEventListener('click', () => {
+  el.importFile.value = '';
+  el.importFile.click();
+});
+
+el.importFile.addEventListener('change', () => {
+  const file = el.importFile.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try{
+      parsed = JSON.parse(reader.result);
+    }catch(e){
+      showToast('El archivo no es un respaldo válido.');
+      return;
+    }
+    if(!parsed || !parsed.current || !Array.isArray(parsed.history)){
+      showToast('El archivo no es un respaldo válido.');
+      return;
+    }
+    if(confirm('Esto reemplazará los datos actuales de la app con los del respaldo. ¿Continuar?')){
+      state = parsed;
+      render();
+      showToast('Respaldo importado.');
+    }
+  };
+  reader.readAsText(file);
 });
 
 el.fecha.value = todayISO();
