@@ -170,13 +170,13 @@
 
 <header>
   <h1>🗒️ STRM REMESA DEL INTERIOR</h1>
-  <div class="sub" id="entryLabel">Entrada actual</div>
+  <div class="sub" id="entryLabel"></div>
 </header>
 
 <main>
 
   <div class="card">
-    <h2>🧾 Nuevo artículo <span class="badge" id="itemCount">0</span></h2>
+    <h2>🧾 Pago de servicio <span class="badge" id="itemCount">0</span></h2>
 
     <div class="row2">
       <div class="field">
@@ -310,7 +310,6 @@ const el = {
   emptyMsg: document.getElementById('emptyMsg'),
   currentTotal: document.getElementById('currentTotal'),
   itemCount: document.getElementById('itemCount'),
-  entryLabel: document.getElementById('entryLabel'),
   historyList: document.getElementById('historyList'),
   historyEmpty: document.getElementById('historyEmpty'),
   historyCount: document.getElementById('historyCount'),
@@ -364,7 +363,6 @@ function currentTotal(){
 }
 
 function render(){
-  el.entryLabel.textContent = `Entrada #${state.nextEntryNumber} en curso`;
 
   el.itemsList.innerHTML = '';
   state.current.items.forEach((it, idx) => {
