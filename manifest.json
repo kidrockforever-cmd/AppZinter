@@ -1,6 +1,6 @@
 {
-  "name": "Registro de Entradas",
-  "short_name": "Entradas",
+  "name": "STRM REMESA DEL INTERIOR",
+  "short_name": "STRM REMESA",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
